@@ -14,7 +14,7 @@ spec:
   source:
     path: apic/environments/multi-cluster/app
     repoURL: https://github.com/ocaso-demo/multi-tenancy-gitops-apps.git
-    targetRevision: master
+    targetRevision: main
   syncPolicy: {}
   ignoreDifferences:
   - group: apps

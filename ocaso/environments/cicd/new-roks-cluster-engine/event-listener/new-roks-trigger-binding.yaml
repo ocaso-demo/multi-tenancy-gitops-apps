@@ -1,0 +1,20 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: new-roks-cluster
+spec:
+  params:
+  # - name: ibm-apikey
+  #   value: $(body.apikey)
+  - name: cluster-name
+    value: $(body.cluster-name)
+  - name: git-new-roks-url
+    value: $(body.new-roks-url)
+  - name: git-new-roks-branch
+    value: $(body.new-roks-branch)
+  - name: multi-tenancy-gitops-url
+    value: $(body.multi-tenancy-url)
+  - name: multi-tenancy-gitops-branch
+    value: $(body.multi-tenancy-branch)
+  - name: debug
+    value: $(body.debug)

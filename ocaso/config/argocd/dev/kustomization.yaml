@@ -1,0 +1,3 @@
+# Select what you want to get installed
+resources:
+ - nginx-app

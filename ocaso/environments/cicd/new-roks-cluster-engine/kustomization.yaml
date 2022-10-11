@@ -1,0 +1,12 @@
+resources:
+ - event-listener/new-roks-event-listener.yaml
+ - event-listener/new-roks-route.yaml
+ - event-listener/new-roks-trigger-binding.yaml
+ - event-listener/new-roks-trigger-template.yaml
+ - pipelines/new-roks-pipeline.yaml
+ - rbac/new-roks-tekton-event-listener-rbac.yaml
+ - rbac/tekton-ci-pipeline.yaml
+ - tasks/new-roks-create-task.yaml
+ - tasks/new-roks-import-task.yaml
+ - secrets/ibm-apikey.yaml
+ - secrets/git-credentials.yaml

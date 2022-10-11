@@ -1,0 +1,145 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: new-roks-import-cluster
+  annotations:
+    description: Imports a newly created ROKS cluster into RHACM
+  labels:
+    version: 0.0.1
+spec:
+  description: >-
+    Imports a newly created ROKS cluster into RHACM
+  params:
+    - name: cluster-name
+      type: string
+      description: New cluster's name
+    # - name: ibm-apikey
+    #   type: string
+    #   description: Your IBM API Key
+    - name: git-new-roks-url
+      type: string
+      description: GitHub url where the scripts to create a new ROKS cluster are for the pipeline to execute them.
+    - name: git-new-roks-branch
+      type: string
+      default: main
+      description: Github branch for the pipeline scripts
+    - name: multi-tenancy-gitops-url
+      type: string
+      description: Multi-tenancy GitHub repository url where clusters are managed from.
+    - name: multi-tenancy-gitops-branch
+      type: string
+      default: master
+      description: Github branch for the multi-tenancy-gitops repo.
+    - name: source-dir
+      type: string
+      default: /source
+      description: Path where an empty directory will be mounted to which will serve as the source location for all the task steps.
+    - name: oc-cli-image
+      type: string
+      default: quay.io/openshift/origin-cli:latest
+      description: OpenShift CLI Docker image needed for executing oc commands.
+    - name: git-image
+      type: string
+      default: quay.io/ibmgaragecloud/alpine-git
+      description: Git Docker image needed for executing git commands.
+    - name: debug
+      type: string
+      default: "True"
+      description: Debug flag
+  volumes:
+    - name: source
+      emptyDir: {}
+  stepTemplate:
+    volumeMounts:
+      - name: source
+        mountPath: $(params.source-dir)
+    env:
+      - name: CONFIG_FILES_DIR
+        value: $(params.source-dir)/config
+      # - name: IBM_APIKEY
+      #   value: $(params.ibm-apikey)
+      - name: CLUSTER_NAME
+        value: $(params.cluster-name)
+    envFrom:
+      - secretRef:
+          name: ibm-apikey
+      - secretRef:
+          name: git-credentials
+  steps:
+    - name: git-clone-ibm-roks
+      image: $(params.git-image)
+      script: |
+        echo "********************"
+        echo "** Step git-clone **"
+        echo "********************"
+        echo
+        if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
+        if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PRIV_TOKEN}" ]]; then
+            git clone "$(echo $(params.git-new-roks-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PRIV_TOKEN}@$(echo $(params.git-new-roks-url) | awk -F '://' '{print $2}')" $(params.source-dir)
+        else
+            git clone $(params.git-new-roks-url) $(params.source-dir)
+        fi
+        cd $(params.source-dir)
+        git checkout $(params.git-new-roks-branch)
+        set +x
+    - name: import-cluster
+      image: $(params.oc-cli-image)
+      workingDir: $(params.source-dir)
+      script: |
+        echo "*************************"
+        echo "** Step import-cluster **"
+        echo "*************************"
+        echo
+        echo "Name for the cluster to be imported: ${CLUSTER_NAME}"
+        if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
+        ### Install IBM Cloud CLI
+        curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+        ### Login into the IBM Cloud account
+        ibmcloud login --apikey ${IBM_APIKEY} -r eu-de -q || exit 1
+        ibmcloud plugin install container-service -f
+        ### Get the Kubeconfig for the recently created cluster
+        ibmcloud ks cluster config --admin -c ${CLUSTER_NAME} --output yaml > kubeconfig.yaml || exit 1
+        ### Replace Cluster Name placeholders for import
+        sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/klusterlet.yaml
+        sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/secret.yaml
+        sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/project.yaml
+        sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/managed-cluster.yaml
+        ### Indent Kubeconfig and merge
+        sed -i -r 's/^/    /g' kubeconfig.yaml
+        cat kubeconfig.yaml >> import/secret.yaml
+        ### Import the cluster
+        # These need to be done here as you can't commit a secret with credentials into git
+        # Could we implement a path here whereby we ask Secret Manager to store a secret for us
+        # we can then reference in GitHub?
+        oc apply -f import/project.yaml
+        sleep 10
+        oc apply -f import/secret.yaml
+        # These will be done in next step
+        # oc apply -f import/klusterlet.yaml
+        # oc apply -f import/managed-cluster.yaml
+        set +x
+    # - name: git-clone-multi-tenancy-gitops
+    #   image: $(params.git-image)
+    #   script: |
+    #     echo "********************"
+    #     echo "** Step git-clone **"
+    #     echo "********************"
+    #     echo
+    #     if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
+    #     mkdir -p /tmp/gitops
+    #     if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PRIV_TOKEN}" ]]; then
+    #         git clone "$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PRIV_TOKEN}@$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $2}')" /tmp/gitops
+    #     else
+    #         git clone $(params.multi-tenancy-gitops-url) /tmp/gitops
+    #     fi
+    #     ###############################################################
+    #     ###############################################################
+    #     ###############################################################
+    #     ### CREATE CLUSTER IN multi-tenancy-gitops/hub/4-rhacm/argocd/cluster
+    #     ###############################################################
+    #     ###############################################################
+    #     ###############################################################
+    #     cd /tmp/gitops
+    #     git checkout $(params.multi-tenancy-gitops-branch)
+
+    #     set +x

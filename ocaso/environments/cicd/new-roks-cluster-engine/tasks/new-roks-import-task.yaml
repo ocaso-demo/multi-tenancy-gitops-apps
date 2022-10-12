@@ -147,15 +147,6 @@ spec:
         sed -i'.bak' -e 's/CLUSTER_NAME/'"${CLUSTER_NAME}"'/g' ${CLUSTER_NAME}.yaml
         rm ${CLUSTER_NAME}.yaml.bak
         cd /tmp/gitops
-        ####### DELELETE
-        ####### DELELETE
-        ####### DELELETE
-        ####### DELELETE
-        ####### DELELETE
-        ls -all 0-bootstrap/spokeclusters
-        cat 0-bootstrap/hub/4-rhacm/argocd/clusters/imported/${CLUSTER_NAME}.yaml
-        cat 0-bootstrap/hub/4-rhacm/4-rhacm.yaml
-        exit 1
         # Commit changes
         git config --global user.email "demo@example.com"
         git config --global user.name "New ROKS cluster pipeline"

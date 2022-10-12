@@ -134,7 +134,7 @@ spec:
         git checkout $(params.multi-tenancy-gitops-branch)
         # Create new cluster structure
         cd 0-bootstrap/spokeclusters/spoke-cluster-template
-        ./new-cluster ${CLUSTER_NAME}
+        ./new-cluster.sh ${CLUSTER_NAME}
         cd /tmp/gitops
         # Create new cluster definition
         cd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported

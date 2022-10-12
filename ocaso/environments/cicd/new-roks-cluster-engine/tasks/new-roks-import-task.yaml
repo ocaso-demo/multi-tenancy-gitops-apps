@@ -131,14 +131,10 @@ spec:
             git clone $(params.multi-tenancy-gitops-url) /tmp/gitops
         fi
         cd /tmp/gitops
-        echo "XXXXXXXXXXXXXXXXXXXXXXXXXX"
-        ls -all
         git checkout $(params.multi-tenancy-gitops-branch)
         # Create new cluster structure
         cd 0-bootstrap/spokeclusters/spoke-cluster-template
-        echo "XXXXXXXXXXXXXXXXXXXXXXXXXX"
-        ls -all
-        ./new-cluster.sh ${CLUSTER_NAME}
+        sh new-cluster.sh ${CLUSTER_NAME}
         cd /tmp/gitops
         # Create new cluster definition
         cd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported

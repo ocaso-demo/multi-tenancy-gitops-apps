@@ -100,10 +100,8 @@ spec:
         ### Get the Kubeconfig for the recently created cluster
         ibmcloud ks cluster config --admin -c ${CLUSTER_NAME} --output yaml > kubeconfig.yaml || exit 1
         ### Replace Cluster Name placeholders for import
-        sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/klusterlet.yaml
         sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/secret.yaml
         sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/project.yaml
-        sed -i -r "s@CLUSTER_NAME_PLACEHOLDER@$CLUSTER_NAME@g" import/managed-cluster.yaml
         ### Indent Kubeconfig and merge
         sed -i -r 's/^/    /g' kubeconfig.yaml
         cat kubeconfig.yaml >> import/secret.yaml
@@ -118,28 +116,33 @@ spec:
         # oc apply -f import/klusterlet.yaml
         # oc apply -f import/managed-cluster.yaml
         set +x
-    # - name: git-clone-multi-tenancy-gitops
-    #   image: $(params.git-image)
-    #   script: |
-    #     echo "********************"
-    #     echo "** Step git-clone **"
-    #     echo "********************"
-    #     echo
-    #     if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
-    #     mkdir -p /tmp/gitops
-    #     if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PRIV_TOKEN}" ]]; then
-    #         git clone "$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PRIV_TOKEN}@$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $2}')" /tmp/gitops
-    #     else
-    #         git clone $(params.multi-tenancy-gitops-url) /tmp/gitops
-    #     fi
-    #     ###############################################################
-    #     ###############################################################
-    #     ###############################################################
-    #     ### CREATE CLUSTER IN multi-tenancy-gitops/hub/4-rhacm/argocd/cluster
-    #     ###############################################################
-    #     ###############################################################
-    #     ###############################################################
-    #     cd /tmp/gitops
-    #     git checkout $(params.multi-tenancy-gitops-branch)
-
-    #     set +x
+    - name: git-clone-multi-tenancy-gitops
+      image: $(params.git-image)
+      script: |
+        echo "********************"
+        echo "** Step git-clone **"
+        echo "********************"
+        echo
+        if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
+        mkdir -p /tmp/gitops
+        if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PRIV_TOKEN}" ]]; then
+            git clone "$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PRIV_TOKEN}@$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $2}')" /tmp/gitops
+        else
+            git clone $(params.multi-tenancy-gitops-url) /tmp/gitops
+        fi
+        cd /tmp/gitops
+        git checkout $(params.multi-tenancy-gitops-branch)
+        # Create new cluster structure
+        pushd 0-bootstrap/spokeclusters/spoke-cluster-template
+        ./new-cluster ${CLUSTER_NAME}
+        popd
+        # Create new cluster definition
+        pushd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported
+        cp cluster-template.yaml_tmp ${CLUSTER_NAME}.yaml
+        sed -i -r 's/CLUSTER_NAME/'"\\${CLUSTER_NAME}"'/g' ${CLUSTER_NAME}.yaml
+        popd
+        # Commit changes
+        git add --all
+        git commit -m "NEW ROKS PIPELINE CHANGE - Cluster ${CLUSTER_NAME}"
+        git push origin $(params.multi-tenancy-gitops-branch)
+        set +x

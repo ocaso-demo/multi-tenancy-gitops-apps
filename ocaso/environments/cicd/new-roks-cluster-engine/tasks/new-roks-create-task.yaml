@@ -79,7 +79,7 @@ spec:
         ####### DELELETE
         ####### DELELETE
         ####### DELELETE
-        echo -n "${CLUSTER_NAME}" | tee $(results.cluster-name.path)
+        echo -n "test-cluster-2" | tee $(results.cluster-name.path)
         set +x
     # - name: create-roks-cluster
     #   image: $(params.terraform-image)

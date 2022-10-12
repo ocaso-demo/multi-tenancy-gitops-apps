@@ -75,21 +75,21 @@ spec:
         cd $(params.source-dir)
         git checkout $(params.git-new-roks-branch)
         set +x
-    - name: create-roks-cluster
-      image: $(params.terraform-image)
-      workingDir: $(params.source-dir)
-      script: |
-        echo "******************************"
-        echo "** Step create-roks-cluster **"
-        echo "******************************"
-        echo
-        if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
-        ### Replace the value of the IBM API Key
-        sed -i -r "s@API_KEY_PLACEHOLDER@$IBM_APIKEY@g" main.tf
-        ### Execute terraform
-        terraform init
-        terraform apply -auto-approve -var cluster-name=$(params.cluster-name)
-        ### Save the cluster name which will be used in the following steps
-        CLUSTER_NAME=`terraform output cluster_name | sed 's/"//g'`
-        echo -n "${CLUSTER_NAME}" | tee $(results.cluster-name.path)
-        set +x
+    # - name: create-roks-cluster
+    #   image: $(params.terraform-image)
+    #   workingDir: $(params.source-dir)
+    #   script: |
+    #     echo "******************************"
+    #     echo "** Step create-roks-cluster **"
+    #     echo "******************************"
+    #     echo
+    #     if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
+    #     ### Replace the value of the IBM API Key
+    #     sed -i -r "s@API_KEY_PLACEHOLDER@$IBM_APIKEY@g" main.tf
+    #     ### Execute terraform
+    #     terraform init
+    #     terraform apply -auto-approve -var cluster-name=$(params.cluster-name)
+    #     ### Save the cluster name which will be used in the following steps
+    #     CLUSTER_NAME=`terraform output cluster_name | sed 's/"//g'`
+    #     echo -n "${CLUSTER_NAME}" | tee $(results.cluster-name.path)
+    #     set +x

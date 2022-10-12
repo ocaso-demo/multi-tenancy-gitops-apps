@@ -135,6 +135,11 @@ spec:
         # Create new cluster structure
         cd 0-bootstrap/spokeclusters/spoke-cluster-template
         sh new-cluster.sh ${CLUSTER_NAME}
+        if [[ $? -ne 0 ]]
+        then 
+          echo "ERROR creating new cluster with new-cluster.sh"
+          exit 1
+        fi
         cd /tmp/gitops
         # Create new cluster definition
         cd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported
@@ -142,6 +147,8 @@ spec:
         sed -i -r 's/CLUSTER_NAME/'"\\${CLUSTER_NAME}"'/g' ${CLUSTER_NAME}.yaml
         cd /tmp/gitops
         # Commit changes
+        git config --global user.email "demo@example.com"
+        git config --global user.name "New ROKS cluster pipeline"
         git add --all
         git commit -m "NEW ROKS PIPELINE CHANGE - Cluster ${CLUSTER_NAME}"
         git push origin $(params.multi-tenancy-gitops-branch)

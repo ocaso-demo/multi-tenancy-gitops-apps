@@ -74,6 +74,12 @@ spec:
         fi
         cd $(params.source-dir)
         git checkout $(params.git-new-roks-branch)
+        ####### DELELETE
+        ####### DELELETE
+        ####### DELELETE
+        ####### DELELETE
+        ####### DELELETE
+        echo -n "${CLUSTER_NAME}" | tee $(results.cluster-name.path)
         set +x
     # - name: create-roks-cluster
     #   image: $(params.terraform-image)

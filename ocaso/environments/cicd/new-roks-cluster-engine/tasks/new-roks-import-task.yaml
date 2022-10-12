@@ -133,14 +133,14 @@ spec:
         cd /tmp/gitops
         git checkout $(params.multi-tenancy-gitops-branch)
         # Create new cluster structure
-        pushd 0-bootstrap/spokeclusters/spoke-cluster-template
+        cd 0-bootstrap/spokeclusters/spoke-cluster-template
         ./new-cluster ${CLUSTER_NAME}
-        popd
+        cd /tmp/gitops
         # Create new cluster definition
-        pushd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported
+        cd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported
         cp cluster-template.yaml_tmp ${CLUSTER_NAME}.yaml
         sed -i -r 's/CLUSTER_NAME/'"\\${CLUSTER_NAME}"'/g' ${CLUSTER_NAME}.yaml
-        popd
+        cd /tmp/gitops
         # Commit changes
         git add --all
         git commit -m "NEW ROKS PIPELINE CHANGE - Cluster ${CLUSTER_NAME}"

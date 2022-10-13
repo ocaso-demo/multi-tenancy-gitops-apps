@@ -31,6 +31,7 @@ spec:
     - name: new-roks-create-cluster
       taskRef:
         name: new-roks-create-cluster
+      timeout: "2h0m0s"
       params:
       # New ROKS Cluster name
       - name: cluster-name

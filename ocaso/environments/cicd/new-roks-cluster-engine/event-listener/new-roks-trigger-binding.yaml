@@ -4,8 +4,6 @@ metadata:
   name: new-roks-cluster
 spec:
   params:
-  # - name: ibm-apikey
-  #   value: $(body.apikey)
   - name: cluster-name
     value: $(body.cluster-name)
   - name: git-new-roks-url

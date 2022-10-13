@@ -4,7 +4,6 @@ metadata:
   name: new-roks-cluster
 spec:
   params:
-  # - name: ibm-apikey
   - name: cluster-name
     default: ""
   - name: git-new-roks-url
@@ -26,8 +25,6 @@ spec:
       pipelineRef:
         name: new-roks-cluster
       params:
-      # - name: ibm-apikey
-      #   value: $(tt.params.ibm-apikey)
       - name: cluster-name
         value: $(tt.params.cluster-name)
       - name: git-new-roks-url

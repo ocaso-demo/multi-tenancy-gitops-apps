@@ -13,9 +13,6 @@ spec:
     - name: cluster-name
       type: string
       description: New cluster's name
-    # - name: ibm-apikey
-    #   type: string
-    #   description: Your IBM API Key
     - name: git-new-roks-url
       type: string
       description: GitHub url where the scripts to create a new ROKS cluster are for the pipeline to execute them.
@@ -56,8 +53,6 @@ spec:
     env:
       - name: CONFIG_FILES_DIR
         value: $(params.source-dir)/config
-      # - name: IBM_APIKEY
-      #   value: $(params.ibm-apikey)
       - name: CLUSTER_NAME
         value: $(params.cluster-name)
     envFrom:
@@ -112,45 +107,42 @@ spec:
         oc apply -f import/project.yaml
         sleep 10
         oc apply -f import/secret.yaml
-        # These will be done in next step
-        # oc apply -f import/klusterlet.yaml
-        # oc apply -f import/managed-cluster.yaml
         set +x
-    # - name: git-clone-multi-tenancy-gitops
-    #   image: $(params.git-image)
-    #   script: |
-    #     echo "********************"
-    #     echo "** Step git-clone **"
-    #     echo "********************"
-    #     echo
-    #     if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
-    #     mkdir -p /tmp/gitops
-    #     if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PRIV_TOKEN}" ]]; then
-    #         git clone "$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PRIV_TOKEN}@$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $2}')" /tmp/gitops
-    #     else
-    #         git clone $(params.multi-tenancy-gitops-url) /tmp/gitops
-    #     fi
-    #     cd /tmp/gitops
-    #     git checkout $(params.multi-tenancy-gitops-branch)
-    #     # Create new cluster structure
-    #     cd 0-bootstrap/spokeclusters/spoke-cluster-template
-    #     sh new-cluster.sh ${CLUSTER_NAME}
-    #     if [[ $? -ne 0 ]]
-    #     then 
-    #       echo "ERROR creating new cluster with new-cluster.sh"
-    #       exit 1
-    #     fi
-    #     cd /tmp/gitops
-    #     # Create new cluster definition
-    #     cd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported
-    #     cp cluster-template.yaml_tmp ${CLUSTER_NAME}.yaml
-    #     sed -i'.bak' -e 's/CLUSTER_NAME/'"${CLUSTER_NAME}"'/g' ${CLUSTER_NAME}.yaml
-    #     rm ${CLUSTER_NAME}.yaml.bak
-    #     cd /tmp/gitops
-    #     # Commit changes
-    #     git config --global user.email "demo@example.com"
-    #     git config --global user.name "New ROKS cluster pipeline"
-    #     git add --all
-    #     git commit -m "NEW ROKS PIPELINE CHANGE - Cluster ${CLUSTER_NAME}"
-    #     git push origin $(params.multi-tenancy-gitops-branch)
-    #     set +x
+    - name: git-clone-multi-tenancy-gitops
+      image: $(params.git-image)
+      script: |
+        echo "********************"
+        echo "** Step git-clone **"
+        echo "********************"
+        echo
+        if [[ "$(params.debug)" == "True" ]]; then echo "DEBUG is enabled"; set -x; fi
+        mkdir -p /tmp/gitops
+        if [[ -n "${GIT_USERNAME}" ]] && [[ -n "${GIT_PRIV_TOKEN}" ]]; then
+            git clone "$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $1}')://${GIT_USERNAME}:${GIT_PRIV_TOKEN}@$(echo $(params.multi-tenancy-gitops-url) | awk -F '://' '{print $2}')" /tmp/gitops
+        else
+            git clone $(params.multi-tenancy-gitops-url) /tmp/gitops
+        fi
+        cd /tmp/gitops
+        git checkout $(params.multi-tenancy-gitops-branch)
+        # Create new cluster structure
+        cd 0-bootstrap/spokeclusters/spoke-cluster-template
+        sh new-cluster.sh ${CLUSTER_NAME}
+        if [[ $? -ne 0 ]]
+        then 
+          echo "ERROR creating new cluster with new-cluster.sh"
+          exit 1
+        fi
+        cd /tmp/gitops
+        # Create new cluster definition
+        cd 0-bootstrap/hub/4-rhacm/argocd/clusters/imported
+        cp cluster-template.yaml_tmp ${CLUSTER_NAME}.yaml
+        sed -i'.bak' -e 's/CLUSTER_NAME/'"${CLUSTER_NAME}"'/g' ${CLUSTER_NAME}.yaml
+        rm ${CLUSTER_NAME}.yaml.bak
+        cd /tmp/gitops
+        # Commit changes
+        git config --global user.email "demo@example.com"
+        git config --global user.name "New ROKS cluster pipeline"
+        git add --all
+        git commit -m "NEW ROKS PIPELINE CHANGE - Cluster ${CLUSTER_NAME}"
+        git push origin $(params.multi-tenancy-gitops-branch)
+        set +x

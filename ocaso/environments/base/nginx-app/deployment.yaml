@@ -18,7 +18,8 @@ spec:
     spec:
       containers:
         - name: ocaso-nginx-app
-          image: nginxdemos/nginx-hello:plain-text
+          image: nginxdemos/nginx-hello:latest
+          # image: nginxdemos/nginx-hello:plain-text
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
